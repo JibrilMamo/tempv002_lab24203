@@ -15,14 +15,17 @@ module prc(
     
     always @(posedge clk)
     begin
-        if (branchTaken) begin 
-               //TODO update PC based on the branchPCOffset
-          end
-          else if (stall) begin // if there is a Load Use Hazard, then stall
-             PC <= PC;
-          end
-          else begin
-             PC <= PC + 4;
-          end
+
+      if (branchTaken) begin 
+         PC <= PC + branchPCOffset;
+         end
+         else if (stall) begin
+            PC <= PC; 
+         end
+         else begin
+            PC <= PC + 4; 
+         end
+
+      
      end
 endmodule

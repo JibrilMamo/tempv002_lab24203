@@ -53,27 +53,60 @@ module execute(
                    EXMEMIR <= IDEXIR; EXMEMB <= Bin; //pass along the IR & B register
               end
               else if (IDEXop==ALUop) begin
+                case(IDEXIR[5:0]) // func field of the instruction
+                    6'b100000: EXMEMALUOut = IDEXA + IDEXB; // ADD
+                    6'b110010: EXMEMALUOut = IDEXA ^ IDEXB; // XOR
+                    6'b110011: EXMEMALUOut = ~(IDEXA & IDEXB); // NAND
+                    6'b110100: EXMEMALUOut = (IDEXA > IDEXB) ? 32'd1 : 32'd0; // SGT
+                    6'b110101: EXMEMALUOut = IDEXA >> IDEXB; // SRL
+                    default: EXMEMALUOut = 32'b0; // Default case
+                endcase
+
+
+
                 case (IDEXIR[5:0]) //case for the various R-type instructions
-                       32: begin
-                              EXMEMALUOut <= Ain + Bin;  //add operation
-                           end
-                                                                         //TODO ... add cases for XOR, NAND, SGT, SRL 
-                       default: ; //other R-type operations: subtract, SLT, etc.
-                     endcase
+                      32: begin
+                          EXMEMALUOut <= Ain + Bin;  //add operation
+                      end
+                      50: begin
+                          EXMEMALUOut <= Ain ^ Bin;  //XOR
+                      end
+                      51: begin
+                          EXMEMALUOut <= ~(Ain & Bin); //NAND
+                      end
+                      52: begin
+                          EXMEMALUOut <= (Ain > Bin) ? 32'd1 : 32'd0; //SGT
+                      end
+                      53: begin
+                          EXMEMALUOut <= Ain >> Bin; //SRL
+                      end
+                      default: ; //other R-type operations: subtract, SLT, etc.
+                  endcase
+
                      EXMEMIR <= IDEXIR; //pass along the IR & B register
               end
+              if(IDEXIR[31:26] == 6'b101111) begin // opcode for CINDC
+                    if (IDEXA > 0)
+                        EXMEMALUOut = IDEXA - IDEXB; // Conditional decrement
+                    else
+                        EXMEMALUOut = IDEXA + IDEXB; // Conditional increment
+                end
+
+//------------------------------------------------------
               else if (IDEXop==CINDC) begin
-                         if (Ain > 0) begin 
-                             //TODO Assign Ain - Bin to EXMEMALUOut
-                         end
-                         else begin
-                             //TODO Assign Ain + Bin to EXMEMALUOut
-                         end  
-                         EXMEMIR <= IDEXIR; //pass along the IR & B register
-              end           
-              else if (IDEXop==BEQINIT) begin
-                        // Do n
-                        EXMEMIR <= IDEXIR;
+                  if (Ain > 0) begin
+                      //TODO Assign Ain - Bin to EXMEMALUOut
+                      EXMEMALUOut <= Ain - Bin;
+                  end else begin
+                      //TODO Assign Ain + Bin to EXMEMALUOut
+                      EXMEMALUOut <= Ain + Bin;
+                  end
+                  EXMEMIR <= IDEXIR; //pass along the IR & B register
               end
+              else if (IDEXop==BEQINIT) begin
+                  // For BEQINIT, no ALU computation here, just pass IR
+                  EXMEMIR <= IDEXIR;
+              end
+              
        end
 endmodule

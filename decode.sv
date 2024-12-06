@@ -25,12 +25,12 @@ module decode(
     
     `include "parameters.sv"
     always @(posedge clk)begin
-        if (stall) 
-              begin// the first three pipeline stages stall if there is a load hazard or branch stall
-                  //TODO inject NOPs
-                 
-                 
-              end
+        if (stall) begin
+          IDEXIR <= no_op;
+          IDEXA  <= no_op;
+          IDEXB  <= no_op;
+            end
+
          else begin
             //ID stage, with input from the WB stage
             IDEXIR <= IFIDIR;
@@ -42,17 +42,36 @@ module decode(
               IDEXB <= CPU.Regs[IFIDIR[20:16]]; // rt register value goes to IDEXB
             else
               IDEXB <= MEMWBValue;
-              
+            
             if (IFIDop == BEQINIT) begin
-                 if (branchTaken)begin
-                  //TODO set the value of R[rt] to 1
- 		 end
-            end
+              if (branchTaken) begin
+                  CPU.Regs[IFIDIR[20:16]] <= 32'd1; 
+              end
+          end
+              
          end
     end      
     
-    always @(*) begin //TODO set the branchTaken and branchPCOffset
+    reg [31:0] signExtImm;
 
+    always @(*) begin
+        branchTaken     = 1'b0;
+        branchPCOffset  = 32'd0;
+
+        signExtImm = {{16{IFIDIR[15]}}, IFIDIR[15:0]};
+
+        if (IFIDop == BEQINIT) begin
+            branchTaken     = (CPU.Regs[IFIDIR[25:21]] == CPU.Regs[IFIDIR[20:16]]) ? 1'b1 : 1'b0;
+            branchPCOffset  = signExtImm << 2;
+        end
     end
 
+
+
 endmodule
+
+
+
+
+
+

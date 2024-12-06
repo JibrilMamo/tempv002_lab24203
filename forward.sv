@@ -15,6 +15,11 @@ module forward(
     output [31:0] Bin
     );
     
-   // TODO assign Ain and Bin 
+   assign Ain = (bypassAfromMEM) ? EXMEMALUOut :
+             (bypassAfromALUinWB || bypassAfromLWinWB) ? MEMWBValue : IDEXA;
+
+    assign Bin = (bypassBfromMEM) ? EXMEMALUOut :
+             (bypassBfromALUinWB || bypassBfromLWinWB) ? MEMWBValue : IDEXB;
+
 
 endmodule
